@@ -1,3 +1,4 @@
+from collections import defaultdict
 from typing import List
 
 from AdventOfCode2023.day_7_input import day_7_input
@@ -7,6 +8,10 @@ from AdventOfCode2023.day_7_input import day_7_input
 mapping_to_lexicographic_order = {
     'A': 'E', 'K': 'D', 'Q': 'C', 'J': 'B', 'T': 'A', '9': '9', '8': '8',
     '7': '7', '6': '6', '5': '5', '4': '4', '3': '3', '2': '2'
+}
+mapping_to_lexicographic_order_2 = {
+    'A': 'E', 'K': 'D', 'Q': 'C', 'T': 'A', '9': '9', '8': '8',
+    '7': '7', '6': '6', '5': '5', '4': '4', '3': '3', '2': '2', 'J': '1'
 }
 
 
@@ -66,19 +71,19 @@ def get_card_counts(hand: str) -> List[int]:
     return sorted(counts)
 
 
-def get_mapped_hand(hand: str) -> str:
+def get_mapped_hand(hand: str, mapping: dict) -> str:
     """
     Maps a hand using mapping_to_lexicographic_order
     """
     mapped_hand = ''
 
     for elem in hand:
-        mapped_hand += mapping_to_lexicographic_order[elem]
+        mapped_hand += mapping[elem]
 
     return mapped_hand
 
 
-def get_hands_and_bids() -> dict:
+def get_hands_and_bids(mapping: dict) -> dict:
     """
     Extracts the hands and the corresponding bids from the input
     """
@@ -89,7 +94,7 @@ def get_hands_and_bids() -> dict:
 
         # Get the mapped version of the hand (to allow lexicographic
         # ordering)
-        hand = get_mapped_hand(hand)
+        hand = get_mapped_hand(hand, mapping)
 
         hands_and_bids[hand] = int(bid_str)
     return hands_and_bids
@@ -100,7 +105,7 @@ def sort_lexicographically(hands: list) -> list:
 
 
 def puzzle_1_solution():
-    hands_and_bids = get_hands_and_bids()
+    hands_and_bids = get_hands_and_bids(mapping_to_lexicographic_order)
 
     five_of_a_kinds = []
     four_of_a_kinds = []
@@ -150,3 +155,88 @@ def puzzle_1_solution():
 
     return total_winnings
 
+
+def get_card_counts_2(hand: str) -> List[int]:
+    """
+    Counts the occurrences of each label in hand, and returns an ordered
+    list of occurrences
+    """
+    # If all the cards but one have the same label, return True
+    unique_labels = set(hand)
+    counts = defaultdict(int)
+    for unique_label in unique_labels:
+        counts[unique_label] += (hand.count(unique_label))
+
+    if mapping_to_lexicographic_order_2['J'] in counts.keys():
+        jolly_counts = counts[mapping_to_lexicographic_order_2['J']]
+        del counts[mapping_to_lexicographic_order_2['J']]
+
+        if len(counts) == 0:
+            return [jolly_counts]
+
+        # Get the cards with the highest occurrences
+        max_occurrence = max(counts.values())
+        best_labels = [label for label, count in counts.items() if
+                       count == max_occurrence]
+        best_label = list(reversed(sorted(best_labels)))[0]
+
+        # Sum the count of Js to the best card
+        counts[best_label] += jolly_counts
+
+    return sorted(list(counts.values()))
+
+
+def puzzle_2_solution():
+    hands_and_bids = get_hands_and_bids(mapping_to_lexicographic_order_2)
+
+    five_of_a_kinds = []
+    four_of_a_kinds = []
+    full_hands = []
+    three_of_a_kinds = []
+    two_pairs = []
+    one_pairs = []
+    high_cards = []
+
+    for hand in hands_and_bids.keys():
+        counts = get_card_counts(hand=hand)
+        if is_five_of_a_kind(counts):
+            five_of_a_kinds.append(hand)
+        elif is_four_of_a_kind(counts):
+            four_of_a_kinds.append(hand)
+        elif is_full_hand(counts):
+            full_hands.append(hand)
+        elif is_three_of_a_kind(counts):
+            three_of_a_kinds.append(hand)
+        elif is_two_pairs(counts):
+            two_pairs.append(hand)
+        elif is_one_pair(counts):
+            one_pairs.append(hand)
+        elif is_high_card(counts):
+            high_cards.append(hand)
+
+    # Sort in lexicographic order
+    five_of_a_kinds = sort_lexicographically(five_of_a_kinds)
+    four_of_a_kinds = sort_lexicographically(four_of_a_kinds)
+    full_hands = sort_lexicographically(full_hands)
+    three_of_a_kinds = sort_lexicographically(three_of_a_kinds)
+    two_pairs = sort_lexicographically(two_pairs)
+    one_pairs = sort_lexicographically(one_pairs)
+    high_cards = sort_lexicographically(high_cards)
+
+    rank = 1
+    total_winnings = 0
+    hands_types = [
+        high_cards, one_pairs, two_pairs, three_of_a_kinds,
+        full_hands, four_of_a_kinds, five_of_a_kinds
+    ]
+    for hands_type in hands_types:
+        for hand in hands_type:
+            bid = hands_and_bids[hand]
+            total_winnings += bid * rank
+            rank += 1
+
+    return total_winnings
+
+
+if __name__ == "__main__":
+    print(puzzle_2_solution())
