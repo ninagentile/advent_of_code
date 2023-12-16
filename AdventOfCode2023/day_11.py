@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Tuple
 
 import numpy as np
 
@@ -7,7 +7,10 @@ from AdventOfCode2023.inputs.day_11_input import day_11_example, day_11_input
 MULTIPLIER = 1000000 - 1
 
 
-def find_galaxies_coordinates(rows):
+def find_galaxies_coordinates(rows) -> List[Tuple[int, int]]:
+    """
+    Finds the coordinates of the galaxies ('#' characters)
+    """
     coordinates = []
     for row_n, row in enumerate(rows):
         for col_n, el in enumerate(row):
@@ -16,7 +19,7 @@ def find_galaxies_coordinates(rows):
     return coordinates
 
 
-def expand_universe_rows(universe):
+def expand_universe_rows(universe: np.ndarray):
     new_universe = []
     for row in universe:
         # If the row only contains '.', then should be expanded
@@ -31,7 +34,7 @@ def expand_universe_rows(universe):
     return np.array(new_universe)
 
 
-def find_empty_rows(universe) -> np.ndarray:
+def find_empty_rows(universe: np.ndarray) -> np.ndarray:
     empty_rows = []
     for row_n, row in enumerate(universe):
         # If the row only contains '.', then should be expanded
@@ -44,7 +47,10 @@ def find_empty_rows(universe) -> np.ndarray:
     return np.array(empty_rows)
 
 
-def expand_universe(rows):
+def expand_universe(rows: List[str]) -> np.ndarray:
+    """
+    Adds the missing rows to the universe
+    """
     universe = np.array([list(i) for i in rows])
     new_universe = expand_universe_rows(universe)
 
@@ -56,7 +62,9 @@ def expand_universe(rows):
     return new_universe.T
 
 
-def find_min_distance(coords_el_1, coords_el_2):
+def find_min_distance(
+        coords_el_1: Tuple[int, int], coords_el_2: Tuple[int, int]
+) -> int:
     row_1, col_1 = coords_el_1
     row_2, col_2 = coords_el_2
     return abs(row_1 - row_2) + abs(col_1 - col_2)
@@ -65,8 +73,11 @@ def find_min_distance(coords_el_1, coords_el_2):
 def puzzle_1_solution(input_str):
     sum = 0
     rows = input_str.split('\n')
+    # Expand the universe
     expanded_universe = expand_universe(rows)
+    # Find the coordinates of the galaxies
     coordinates = find_galaxies_coordinates(expanded_universe)
+    # Sum the min distance between each pair of galaxies
     for idx, coords_el_1 in enumerate(coordinates):
         for coords_el_2 in coordinates[idx + 1:]:
             sum += find_min_distance(coords_el_1, coords_el_2)
@@ -76,15 +87,17 @@ def puzzle_1_solution(input_str):
 
 def find_min_distance_2(coords_el_1, coords_el_2, empty_rows: np.ndarray,
                         empty_columns: np.ndarray):
+    # Get the distance without considering the expansion
     row_1, col_1 = coords_el_1
     row_2, col_2 = coords_el_2
     distance_without_expansion = find_min_distance(coords_el_1, coords_el_2)
+    # Get the number of missing rows and columns to add
     empty_rows_in_between = empty_rows[
         (empty_rows >= min(row_1, row_2)) & (empty_rows <= max(row_1, row_2))]
     empty_cols_in_between = empty_columns[
         (empty_columns >= min(col_1, col_2)) & (
                     empty_columns <= max(col_1, col_2))]
-
+    # Adjust the distance
     return distance_without_expansion + MULTIPLIER * (
                 len(empty_cols_in_between) + len(empty_rows_in_between))
 
@@ -94,7 +107,7 @@ def puzzle_2_solution(input_str):
     rows = input_str.split('\n')
     universe = np.array([list(i) for i in rows])
     coordinates = find_galaxies_coordinates(universe)
-
+    # Find the list of the indexes of empty rows and columns
     empty_rows = find_empty_rows(universe)
     # To find the columns to be expanded, use the same function but
     # with a transposed matrix
@@ -109,5 +122,5 @@ def puzzle_2_solution(input_str):
 
 
 if __name__ == '__main__':
-    # print(puzzle_1_solution(day_11_input))
+    print(puzzle_1_solution(day_11_input))
     print(puzzle_2_solution(day_11_input))
