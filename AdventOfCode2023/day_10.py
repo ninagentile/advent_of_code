@@ -2,7 +2,7 @@ from enum import Enum
 from typing import Tuple, Optional
 
 from AdventOfCode2023.inputs.day_10_input import day_10_example_1, \
-    day_10_example_2
+    day_10_example_2, day_10_input
 
 
 class Direction(Enum):
@@ -63,6 +63,8 @@ def go_left(row, col, rows):
 
 
 def validate_next_cell(curr_elem, next_elem, going_towards: Direction):
+    if next_elem == 'S':
+        return True
     if curr_elem == '-':
         if going_towards == Direction.RIGHT:
             if next_elem not in ['-', '7', 'J']:
@@ -189,14 +191,16 @@ def get_direction(curr_elem: str, curr_row, curr_col, prev_row, prev_col):
         return Direction.RIGHT
 
     else:
-        raise ValueError()
+        return None
 
 
 def puzzle_1_solution(input_str):
     rows = input_str.split('\n')
-    curr_row, curr_col = get_start_coordinates(rows)
-    curr_elem = 'S'
+
     for direction in list(Direction):
+        curr_row, curr_col = get_start_coordinates(rows)
+        curr_elem = 'S'
+        print('trying', direction)
         can_move = True
         n_steps = 1
         while can_move:
@@ -210,9 +214,11 @@ def puzzle_1_solution(input_str):
                 curr_row, curr_col = result
                 curr_elem = rows[curr_row][curr_col]
                 direction = get_direction(curr_elem, curr_row, curr_col, prev_row, prev_col)
+                if direction is None:
+                    can_move = False
                 if curr_elem == 'S':
                     return n_steps
 
 if __name__ == '__main__':
-    n_steps = puzzle_1_solution(day_10_example_2)
-    print(n_steps / 2)
+    n_steps = puzzle_1_solution(day_10_input)
+    print(int(n_steps / 2))
